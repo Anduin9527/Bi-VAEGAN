@@ -5,6 +5,9 @@ import torch.nn as nn
 from torch.autograd import Variable
 #---------------------- utility functions used ----------------------------
 def idx2onehot(a,k):
+    """
+    index to one-hot vector
+    """
     a=a.astype(int)
     b = np.zeros((a.size, k))
     b[np.arange(a.size), a] = 1
@@ -12,12 +15,18 @@ def idx2onehot(a,k):
 
 
 def confusion_matrix(ytrue, ypred,k):
+    """
+    计算混淆矩阵
+    """
     # C[i,j] denotes the frequency of ypred = i, ytrue = j.
     n = ytrue.size
     C = np.dot(idx2onehot(ypred,k).T,idx2onehot(ytrue,k))
     return C/n
 
 def confusion_matrix_probabilistic(ytrue, ypred,k):
+    """
+    计算混淆矩阵（概率形式）
+    """
     # Input is probabilistic classifiers in forms of n by k matrices
     n,d = np.shape(ypred)
     C = np.dot(ypred.T, idx2onehot(ytrue,k))
@@ -25,15 +34,24 @@ def confusion_matrix_probabilistic(ytrue, ypred,k):
 
 
 def calculate_marginal(y,k):
+    """
+    计算边缘概率
+    """
     mu = np.zeros(shape=(k,1))
     for i in range(k):
         mu[i] = np.count_nonzero(y == i)
     return mu/np.size(y)
 
 def calculate_marginal_probabilistic(y,k):
+    """
+    计算边缘概率（概率形式）
+    """
     return np.mean(y,axis=0)
 
 def estimate_labelshift_ratio(ytrue_s, soft_predict, soft_predict_t,k):
+    """
+    估计标签偏移比率
+    """
     if soft_predict.ndim == 2: # this indicates that it is probabilistic
         C = confusion_matrix_probabilistic(ytrue_s,soft_predict,k)
         mu_t = calculate_marginal_probabilistic(soft_predict_t, k)
@@ -48,6 +66,9 @@ def estimate_labelshift_ratio(ytrue_s, soft_predict, soft_predict_t,k):
     return wt
 
 def smooth_frequency(q,gamma=1):
+    """
+    平滑频率
+    """
     q = q / q.sum()
     q = np.power(q,gamma)
     q = q/ q.sum()
@@ -60,7 +81,7 @@ class LINEAR_LOGSOFTMAX_CLASSIFIER(nn.Module):
         #                            nn.Linear(512,nclass)])
         self.fc = nn.Linear(input_dim, nclass)
         self.logic = nn.Softmax(dim=1)
-    def forward(self, x): 
+    def forward(self, x):
         o = self.logic(self.fc(x))
         self.o = o
         out = torch.log(o)
@@ -70,15 +91,18 @@ class LINEAR_LOGSOFTMAX_CLASSIFIER(nn.Module):
     def _init_weights(self,):
         for module in self.modules():
             if isinstance(module, nn.Linear):
-                torch.nn.init.xavier_uniform_(module.weight)
+                torch.nn.init.xavier_uniform_(module.weight) #Glorot初始化
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
-            
-    
-    
-    
+
+
+
+
 
 class ls(nn.Module):
+    """
+    处理标签偏移问题
+    """
     def __init__(self,synX,synY,synX2,synY2,testX,_batch_size=64,nepoch=20,nclass=10,att_size=85,netR=None,soft = True):
         super().__init__()
         self.epochs_completed = 0
@@ -100,14 +124,14 @@ class ls(nn.Module):
             self.valX = self.compute_dec_out(self.valX, self.dim)
             self.testX = self.compute_dec_out(self.testX, self.dim)
 
-        self.input = torch.FloatTensor(_batch_size, self.dim) 
-        self.label = torch.LongTensor(_batch_size) 
+        self.input = torch.FloatTensor(_batch_size, self.dim)
+        self.label = torch.LongTensor(_batch_size)
         self.criterion = nn.NLLLoss()
         self.cuda=False
         self.model = LINEAR_LOGSOFTMAX_CLASSIFIER(self.dim,nclass=self.nclass)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001, betas=(0.5, 0.999))
-        self.soft = soft 
-        
+        self.soft = soft
+
     def compute_dec_out(self, test_X, new_size):
         start = 0
         ntest = test_X.size()[0]
@@ -160,15 +184,15 @@ class ls(nn.Module):
             self.index_in_epoch += batch_size
             end = self.index_in_epoch
             return self.Xtrain[start:end], self.ytrain[start:end]
-        
+
     def predict_wt(self):
         ntrain = self.Xtrain.size(0)
         self.model._init_weights()
 
         for epoch in range(self.nepoch):
-            for i in range(0, ntrain, self.batch_size): 
+            for i in range(0, ntrain, self.batch_size):
                 self.model.zero_grad()
-                batch_input, batch_label = self.next_batch(self.batch_size) 
+                batch_input, batch_label = self.next_batch(self.batch_size)
                 self.input.copy_(batch_input)
                 self.label.copy_(batch_label)
                 inputv = Variable(self.input)
@@ -177,7 +201,7 @@ class ls(nn.Module):
                 loss = self.criterion(output, labelv)
                 loss.backward()
                 self.optimizer.step()
-                
+
         hard_predict,soft_predict,freq = self.val(self.valX,ylabel=self.valY)
         hard_predict_t,soft_predict_t,freq_s = self.val(self.testX)
         print(f'ls frequency:{freq_s}')
@@ -189,7 +213,7 @@ class ls(nn.Module):
         else:
             w = self.get_w(hard_predict,hard_predict_t)
         return w
-    
+
     # def finetune(self,data,data_y,val,val_y):
     #     input_size = data.size(0)
     #     input_size_val = val.size(0)
@@ -201,11 +225,11 @@ class ls(nn.Module):
     #     self.valX = torch.cat([self.valX[input_size_val:],val],dim=0) 
     #     self.Y = torch.cat([self.va l[input_size_val:],val_y],dim=0) 
     #     return self.predict_wt()
-        
+
     def get_w(self,hard_predict,hard_predict_t):
         w = estimate_labelshift_ratio(np.array(self.valY), np.array(hard_predict.detach()), np.array(hard_predict_t.detach()),self.nclass)
         return w
-        
+
     def val(self,valX,ylabel=None):
         start = 0
         ntest = valX.size()[0]
@@ -229,4 +253,3 @@ class ls(nn.Module):
         # frequency = predicted_label.bincount()/len(self.valY)
         # frequency = frequency/frequency.sum()
 
-        

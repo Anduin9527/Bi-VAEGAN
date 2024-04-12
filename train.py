@@ -19,10 +19,10 @@ from networks.utils import generate_syn_feature, loss_fn, loss_fn_2, calc_gradie
 opt,log_dir,logger, training_logger = OPT().return_opt()
 
 opt.tr_sigma = 1.0
-
+# 如果为GZSL，则需要关闭未知类的先验分布
 if opt.gzsl==True:
-    assert opt.unknown_classDistribution is False
-
+    assert opt.unknown_classDistribution is False # 
+# 随机种子
 if opt.manualSeed is None:
     opt.manualSeed = random.randint(1, 10000)
 logger.info(f'{opt}')
@@ -38,7 +38,7 @@ data = DATA_LOADER(opt)
 
 if opt.pretune_feature:
     pretune(opt,data,save=True)
-
+# 六大模块
 netG = model.Decoder(opt).cuda()
 netCritic = model.MLP_CRITIC(opt).cuda()
 netR = model.AttR(opt).cuda()
@@ -79,10 +79,16 @@ def zero_grad(p):
         p.grad.zero_()
         
 def freezenet(net):
+    """
+    冻结网络
+    """
     for p in net.parameters(): 
         p.requires_grad = False 
 
 def trainnet(net):
+    """
+    解冻网络
+    """
     for p in net.parameters(): 
         p.requires_grad = True 
 
@@ -93,13 +99,13 @@ optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 optimizerE_att = optim.Adam(netE.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 optimizerRCritic = optim.Adam(netRCritic.parameters(), lr=opt.lr, betas=(0.5, 0.999))
 optimizerR = optim.Adam(netR.parameters(), lr=opt.lr, betas=(0.5, 0.999))
-
+# training process
 best_gzsl_acc=0
 best_zsl_acc = 0
 best_acc_seen=0
 best_acc_unseen=0
 
-pre_path = None
+pre_path = None 
 class_prior = None
 
 if opt.R:

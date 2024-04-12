@@ -27,7 +27,7 @@ class CLASSIFIER:
         self.input_dim = _train_X.size(1)
         self.cuda = _cuda
         self.model =  LINEAR_LOGSOFTMAX_CLASSIFIER(self.input_dim, self.nclass)
-        self.feature_type = feature_type
+        self.feature_type = feature_type # 'a' or 'h' or 'vha'
         self.netR = netR if self.feature_type != 'v' else None
         if self.netR:
             if self.feature_type == 'a':
@@ -62,7 +62,7 @@ class CLASSIFIER:
         self.index_in_epoch = 0
         self.epochs_completed = 0
         self.ntrain = self.train_X.size()[0]
-        if generalized:
+        if generalized: 
             self.acc_seen, self.acc_unseen, self.H, self.epoch= self.fit()
             print('Final: acc_seen=%.4f, acc_unseen=%.4f, h=%.4f' % (self.acc_seen, self.acc_unseen, self.H))
         elif self.feature_type == 'a':
@@ -85,6 +85,9 @@ class CLASSIFIER:
             self.acc,self.best_model = self.fit_zsl() 
             #print('acc=%.4f' % (self.acc))
     def fit_zsl(self):
+        """
+        训练分类器，保存准确度最高的模型
+        """
         best_acc = 0
         mean_loss = 0
         last_loss_epoch = 1e8 
@@ -116,6 +119,9 @@ class CLASSIFIER:
         return best_acc, best_model 
         
     def fit(self):
+        """
+        训练分类器(gzsl)，保存调和平均准确度最高的模型
+        """
         best_H = 0
         best_seen = 0
         best_unseen = 0
@@ -267,6 +273,9 @@ class CLASSIFIER:
         return new_test_X
 
 class LINEAR_LOGSOFTMAX_CLASSIFIER(nn.Module):
+    """
+    线性分类器
+    """
     def __init__(self, input_dim, nclass):
         super(LINEAR_LOGSOFTMAX_CLASSIFIER, self).__init__()
         self.fc = nn.Linear(input_dim, nclass)
