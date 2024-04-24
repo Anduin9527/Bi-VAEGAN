@@ -79,9 +79,11 @@ class DATA_LOADER(object):
         read dataset from .mat file
         """
         # 加载图像嵌入数据
+        print(opt.dataroot + "/" + opt.dataset + "/" + opt.image_embedding + ".mat")
         matcontent = sio.loadmat(
             opt.dataroot + "/" + opt.dataset + "/" + opt.image_embedding + ".mat"
         )
+        
         # 提取特征和标签
         self.feature = matcontent["features"].T
         self.label = matcontent["labels"].astype(int).squeeze() - 1
