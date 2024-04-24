@@ -1,5 +1,4 @@
-#!/bin/bash
-export CUDA_VISIBLE_DEVICES=5
+export CUDA_VISIBLE_DEVICES=0
 export OMP_NUM_THREADS=2 
 export DATA_ROOT=./datasets/
 export DATASET=WAVE
