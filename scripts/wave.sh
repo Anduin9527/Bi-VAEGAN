@@ -1,5 +1,5 @@
 export CUDA_VISIBLE_DEVICES=0
-export OMP_NUM_THREADS=2 
+export OMP_NUM_THREADS=2
 export DATA_ROOT=./datasets/
 export DATASET=WAVE
 export NCLASS_ALL=27
@@ -27,21 +27,20 @@ export MANUALSEED=9182
 export NZ=1024
 export BETA=1
 # --with_norm_weight\
-seed=(2346 2336 912) # 
+seed=(2346 2336 912) #
 r=(1)
 
 for six in $(seq 1 1 ${#seed[@]}); do
     for six2 in $(seq 1 1 ${#r[@]}); do
-        export MANUALSEED=${seed[((six-1))]}
-        export RADIUS=${r[((six2-1))]}
+        export MANUALSEED=${seed[((six - 1))]}
+        export RADIUS=${r[((six2 - 1))]}
         python -u train.py \
             --cuda \
             --RCritic \
             --perb \
             --L2_norm \
             --transductive \
-            --manualSeed $MANUALSEED\
-            --nclass_all $NCLASS_ALL \
+            --manualSeed $MANUALSEED --nclass_all $NCLASS_ALL \
             --beta $BETA \
             --dataroot $DATA_ROOT \
             --dataset $DATASET \
@@ -63,12 +62,9 @@ for six in $(seq 1 1 ${#seed[@]}); do
             --critic_iter $CRITIC_ITER \
             --lr $LR \
             --classifier_lr $CLASSIFIER_LR \
-            --mse_weight $MSE_WEIGHT\
-            --radius $RADIUS\
-            --unknown_classDistribution \
+            --mse_weight $MSE_WEIGHT --radius $RADIUS --unknown_classDistribution \
             --ind_epoch 1 \
             --prior_estimation 'CPE'
-            # 1>/dev/null 2>&1 &\
+        # 1>/dev/null 2>&1 &\
     done
 done
-
