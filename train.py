@@ -7,7 +7,7 @@ import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 import sys
 sys.path.append(os.getcwd())
-from datasets.ZSLDataset import DATA_LOADER, map_label
+from ZSLDataset import DATA_LOADER, map_label
 import classifiers.classifier_ZSL as classifier
 from networks import VAEGANV1_model as model
 import numpy as np

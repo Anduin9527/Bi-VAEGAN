@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.optim as optim
 import numpy as np
-import datasets.ZSLDataset as util
+import ZSLDataset as util
 from sklearn.preprocessing import MinMaxScaler 
 import torch.nn.functional as F
 import copy
