@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 import sys
 import torch.nn.functional as F
-from datasets import ZSLDataset as util
+import ZSLDataset as util
 # from visual import tsne_visual
 from networks.VAEGANV1_model import MLP_CRITIC,MLP_CRITIC_un,netRCritic
 import warnings
